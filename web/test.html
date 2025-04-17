@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>app</title>
+</head>
+<body>
+    <h1 id="message">JavaScript</h1>
+    <p>
+        <textarea id="input" autocomplete="off" autocapitalize="off"></textarea>
+    </p>
+    <button onclick="run();">Run</button>
+    <hr>
+    <pre id="output"></pre>
+    <hr>
+    <video autoplay id="preview" src="/test.webm" controls style="width: 500px; height: 200px;"></video>
+
+    <script>
+        function run() {
+            try {
+                document.getElementById("output").innerText = eval(document.getElementById("input").value);
+            } catch (e) {
+                document.getElementById("output").innerText = e.stack;
+            }
+        }
+
+        /*navigator.mediaDevices.getUserMedia({ video: {} })
+            .then(function(mediaStream) {
+                let video = document.querySelector('video');
+                video.srcObject = mediaStream;
+            })
+            .catch(function(err) { document.getElementById("message").innerText = err.name + ": " + err.message; });
+
+        setInterval(() => {
+            if (document.querySelector('video').paused) {
+                document.querySelector('video').play();
+            }
+        })*/
+    </script>
+</body>
+</html>

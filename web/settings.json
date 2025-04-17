@@ -1,0 +1,72 @@
+[
+  {
+    "name": "weather_owm_key",
+    "secret": true,
+    "default": ""
+  },
+  {
+    "name": "sleep_trigger_brightness",
+    "secret": false,
+    "default": "8"
+  },
+  {
+    "name": "sleep_inhibit_duration",
+    "secret": false,
+    "default": "30000"
+  },
+  {
+    "name": "sleep_minimum_opacity",
+    "secret": false,
+    "default": "0.15"
+  },
+  {
+    "name": "ambienteq_brightness_add",
+    "secret": false,
+    "default": "15"
+  },
+  {
+    "name": "ambienteq_add_whilesleep",
+    "secret": false,
+    "default": "false"
+  },
+  {
+    "name": "ambienteq_brightness_enable",
+    "secret": false,
+    "default": "true"
+  },
+  {
+    "name": "ambienteq_filter_enable",
+    "secret": false,
+    "default": "true"
+  },
+  {
+    "name": "notification_duration",
+    "secret": false,
+    "default": "10000"
+  },
+  {
+    "name": "sleep_disable_wakelock",
+    "secret": false,
+    "default": "false"
+  },
+  {
+    "name": "ui_deploy_blur",
+    "secret": false,
+    "default": "true"
+  },
+  {
+    "name": "ui_deploy_trigger",
+    "secret": false,
+    "default": "50"
+  },
+  {
+    "name": "weather_refresh_interval",
+    "secret": false,
+    "default": "60000"
+  },
+  {
+    "name": "weather_iplocation_fallback",
+    "secret": false,
+    "default": "true"
+  }
+]

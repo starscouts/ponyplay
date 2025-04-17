@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <title>app</title>
+    <style id="dynamic-theme">
+        :root {
+            --text-color: white;
+            --surface-bg: #555;
+            --elevated-bg: #777;
+            --bg: #333;
+            --on-surface: #bbb;
+            --on-elevated: #aaa;
+        }
+    </style>
+    <style>
+        @font-face {
+            src: url("/fonts/google.ttf");
+            font-family: "Google Sans";
+        }
+
+        @font-face {
+            src: url("/fonts/mlp.ttf");
+            font-family: "MLPFindYourSparkle";
+        }
+
+        * {
+            color: var(--text-color);
+            font-family: "Google Sans", sans-serif;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        body {
+            font-size: 2.4vw;
+        }
+
+        #sleep.show {
+            opacity: 1 !important;
+            pointer-events: initial !important;
+        }
+
+        #sleep.inhibited {
+            transition: opacity 200ms !important;
+        }
+
+        .notification {
+            box-shadow: 0 0 .5vw rgba(0, 0, 0, .5);
+            background-color: var(--surface-bg);
+            border-radius: 1.5vw;
+            width: 25vw;
+            padding: 2vw;
+        }
+
+        .notification-header {
+            height: 2.5vw;
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5vw;
+        }
+
+        .notification-application {
+            font-size: 1.3vw;
+            vertical-align: middle;
+            display: inline-block;
+            margin-left: 1vw;
+            width: 21.5vw;
+            white-space: nowrap;
+            overflow: hidden !important;
+            text-overflow: ellipsis;
+        }
+
+        .notification-icon {
+            height: 2.5vw;
+            vertical-align: middle;
+            width: 2.5vw;
+            border-radius: 999px;
+            background: var(--on-surface);
+            display: inline-block;
+        }
+
+        .notification-title {
+            font-weight: bold;
+            margin-bottom: .5vw;
+        }
+
+        .notification-content {
+            font-size: 1.8vw;
+        }
+
+        .notification-image {
+            max-width: 100%;
+            border-radius: 1.5vw;
+            margin-top: 1.5vw;
+        }
+
+        #container.deployed {
+            transition: top 200ms, opacity 200ms, border-radius 200ms;
+            transition-timing-function: linear;
+            top: 0 !important;
+            opacity: 1 !important;
+            pointer-events: initial !important;
+            border-radius: 0 !important;
+        }
+
+        #container.deployed #bottom-row {
+            transition: border-radius 200ms;
+            border-radius: 0 !important;
+        }
+
+        #container.backing {
+            pointer-events: initial !important;
+        }
+
+        #container.undeploying {
+            transition: top 200ms, opacity 200ms;
+            transition-timing-function: linear;
+            top: -100vh !important;
+            opacity: 0 !important;
+        }
+
+        #content, #notifications {
+            transition: opacity 200ms;
+        }
+
+        #bg, #bg-blur {
+            transition: opacity 200ms;
+        }
+
+        body.deploying #bg, body.deploying #bg-blur {
+            transition: none !important;
+        }
+
+        body.deploying #content, body.deploying #notifications {
+            opacity: 0;
+        }
+
+        #app.show {
+            opacity: 1 !important;
+            pointer-events: initial !important;
+        }
+
+        #app.show-native iframe {
+            display: none;
+        }
+
+        #app.show-native #app-header-icon-container {
+            width: 100vh !important;
+        }
+
+        #app.show-native #app-header {
+            height: 100vh !important;
+        }
+
+        #alarm.show {
+            opacity: 1 !important;
+            pointer-events: initial !important;
+        }
+    </style>
+</head>
+<body style="background-color: var(--bg);">
+    <div style="position: fixed; inset: 0; z-index: 5000; opacity: 0; pointer-events: none;">
+        <canvas id="canvas"></canvas>
+        <img id="photo">
+        <video id="video"></video>
+        <span id="rgb"></span>
+        <span style="width: 2ch; height: 2ch; background-color: black; display: inline-block;" id="sq1"></span>
+        <span style="width: 2ch; height: 2ch; background-color: black; display: inline-block;" id="sq2"></span>
+    </div>
+
+    <div id="app" style="position: fixed; inset: 0; z-index: 200; background-color: var(--bg); transition: opacity 200ms; pointer-events: none; opacity: 0;">
+        <div id="app-header" style="background-color: var(--surface-bg); height: 10vh; display: grid; grid-template-columns: max-content 1fr;">
+            <div id="app-header-icon-container" onclick="closeApp();" style="width: 10vh; text-align: center; justify-content: center; align-items: center; display: flex;">
+                <img id="app-header-icon">
+            </div>
+            <div style="text-align: center; justify-content: center; align-items: center; display: flex;" id="app-header-title"></div>
+        </div>
+
+        <iframe id="app-frame" src="about:blank" style="border: none; width: 100%; height: 90vh;"></iframe>
+    </div>
+
+    <div id="error" style="background-color: blue; color: white; font-family: monospace !important; font-size: 14px; z-index: 99999; position: fixed; inset: 0; display: none;">
+        <pre id="error-message" style="font-family: monospace !important; font-size: 14px; margin: 0 !important;">-</pre>
+    </div>
+    <pre id="warnings" style="font-family: monospace !important; font-size: 14px; z-index: 99998; position: fixed; top: 0; left: 0; pointer-events: none; color: red; margin: 0 !important;"></pre>
+    <script>
+        function addWarning(warning) {
+            document.getElementById("warnings").innerText += "\n" + warning;
+            document.getElementById("warnings").innerText = document.getElementById("warnings").innerText.trim();
+        }
+
+        if (navigator.userAgent.includes("(Linux; Ponyplay; ")) {
+            document.getElementById("warnings").style.display = "none";
+        } else {
+            addWarning("UNSUPPORTED SETUP -- The application is running outside of the Ponyplay engine. You will get NO SUPPORT.");
+        }
+
+        window.onerror = (_1, _2, _3, _4, error) => {
+            document.getElementById("error").style.display = "";
+            document.getElementById("error-message").innerText = error.stack + "\n\n----\n\n" + JSON.stringify(window.weather, null, 2);
+            return false;
+        }
+
+        window.onunhandledrejection = (e) => {
+            document.getElementById("error").style.display = "";
+            document.getElementById("error-message").innerText = (e.reason?.stack ?? e.reason) + "\n\n----\n\n" + JSON.stringify(window.weather, null, 2);
+            return false;
+        }
+    </script>
+
+    <div id="container" style="position: fixed; left: 0; background-color: var(--surface-bg); z-index: 50; top: -100vh; right: 0; height: 100vh; pointer-events: none; border-bottom-left-radius: 2vw; border-bottom-right-radius: 2vw; display: grid; grid-template-rows: 80vh 20vh;">
+        <div id="top-row">
+            <div id="no-apps" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; opacity: .5;">You don't have any applications .c.</div>
+        </div>
+        <div id="bottom-row" style="background-color: var(--elevated-bg); border-bottom-left-radius: 2vw; border-bottom-right-radius: 2vw; display: grid; grid-template-columns: repeat(6, 1fr);">
+            <div style="display: flex; align-items: center; justify-content: center; text-align: center;">
+                <div>
+                    <div id="app-1-icon" style="display: flex; align-items: center; justify-content: center; margin-left: auto; margin-right: auto; background-color: var(--on-elevated); width: 7.5vh; height: 7.5vh; border-radius: 999px;">
+                        <img id="app-1-icon-img" style="width: 5vh; height: 5vh;">
+                    </div>
+                    <div id="app-1-name" style="font-size: 1.6vw; margin-top: .5vw;">Installer</div>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: center; text-align: center;" onclick="openApp('Alarms', '/apps/alarms.html', true);">
+                <div>
+                    <div id="app-2-icon" style="display: flex; align-items: center; justify-content: center; margin-left: auto; margin-right: auto; background-color: var(--on-elevated); width: 7.5vh; height: 7.5vh; border-radius: 999px;">
+                        <img id="app-2-icon-img" style="width: 5vh; height: 5vh;">
+                    </div>
+                    <div id="app-2-name" style="font-size: 1.6vw; margin-top: .5vw;">Alarms</div>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: center; text-align: center;">
+                <div>
+                    <div id="app-3-icon" style="display: flex; align-items: center; justify-content: center; margin-left: auto; margin-right: auto; background-color: var(--on-elevated); width: 7.5vh; height: 7.5vh; border-radius: 999px;">
+                        <img id="app-3-icon-img" style="width: 5vh; height: 5vh;">
+                    </div>
+                    <div id="app-3-name" style="font-size: 1.6vw; margin-top: .5vw;">Face unlock</div>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: center; text-align: center;">
+                <div>
+                    <div id="app-4-icon" style="display: flex; align-items: center; justify-content: center; margin-left: auto; margin-right: auto; background-color: var(--on-elevated); width: 7.5vh; height: 7.5vh; border-radius: 999px;">
+                        <img id="app-4-icon-img" style="width: 5vh; height: 5vh;">
+                    </div>
+                    <div id="app-4-name" style="font-size: 1.6vw; margin-top: .5vw;">Ponypush</div>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: center; text-align: center;">
+                <div>
+                    <div id="app-5-icon" style="display: flex; align-items: center; justify-content: center; margin-left: auto; margin-right: auto; background-color: var(--on-elevated); width: 7.5vh; height: 7.5vh; border-radius: 999px;">
+                        <img id="app-5-icon-img" style="width: 5vh; height: 5vh;">
+                    </div>
+                    <div id="app-5-name" style="font-size: 1.6vw; margin-top: .5vw;">Weather</div>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: center; text-align: center;" onclick="openApp('Configuration', '/apps/settings.html', true);">
+                <div>
+                    <div id="app-6-icon" style="display: flex; align-items: center; justify-content: center; margin-left: auto; margin-right: auto; background-color: var(--on-elevated); width: 7.5vh; height: 7.5vh; border-radius: 999px;">
+                        <img id="app-6-icon-img" style="width: 5vh; height: 5vh;">
+                    </div>
+                    <div id="app-6-name" style="font-size: 1.6vw; margin-top: .5vw;">Configuration</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="sleep" style="z-index: 1000; color: white !important; background-color: black; position: fixed; inset: 0; opacity: 0; pointer-events: none; transition: opacity 2000ms; display: flex; align-items: center; justify-content: center;" onclick="startInhibitSleep();">
+        <div id="time-sleep" style="color: white !important; font-size: 32vw; margin-top: 16vw; font-family: MLPFindYourSparkle, 'Google Sans', sans-serif; display: inline-block; pointer-events: none;">--:--</div>
+    </div>
+
+    <div id="alarm" style="z-index: 2000; color: black !important; background-color: white; position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background-image: radial-gradient(circle, rgba(255,210,121,1) 0%, rgba(255,255,255,1) 50%); opacity: 0; transition: opacity 200ms; pointer-events: none;" onclick="stopAlarm();">
+        <div>
+            <div id="time-alarm" style="color: black !important; font-size: 32vw; margin-top: 16vw; font-family: MLPFindYourSparkle, 'Google Sans', sans-serif; display: block; pointer-events: none;">--:--</div>
+            <div style="color: black !important; font-size: 2.4vw; position: absolute; text-align: center; width: 100%; left: 0; margin-top: -8vw;">Tap to dismiss alarm</div>
+        </div>
+    </div>
+
+    <div id="bg" style="position: fixed; inset: 0; background-position: center; background-size: cover; z-index: 5;"></div>
+    <div id="bg-blur" style="position: fixed; inset: 0; background-position: center; background-size: cover; z-index: 5;"></div>
+    <div id="swipe-zone" style="position: fixed; inset: 0; background-image: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.25) 100%); z-index: 10;"></div>
+    <div id="filter" style="background-color: white; position: fixed; inset: 0; z-index: 500; opacity: .1; transition: background-color 2000ms;pointer-events: none;"></div>
+    <div style="position: fixed; bottom: 3vw; left: 4.5vw; z-index: 20; text-shadow: 0 0 .5vw rgba(0, 0, 0, .5);" id="content">
+        <div id="date">---, -- ---</div>
+        <div id="time" style="font-size: 8vw; margin-top: 4vw; font-family: MLPFindYourSparkle, 'Google Sans', sans-serif; display: inline-block;">--:--</div>
+        <div style="display: inline-block; font-size: 3vw; margin-left: 1vw;">
+            <img style="vertical-align: middle; width: 3vw; height: 3vw;" id="weather">
+            <span style="vertical-align: middle;" id="temperature">--°</span>
+        </div>
+        <div id="alarm-coming" style="position: fixed; right: 4.5vw; bottom: 6vw; display: none;">
+            <img id="alarm-coming-icon" style="vertical-align: middle;">
+            <span id="alarm-coming-time" style="vertical-align: middle;">--:--</span>
+        </div>
+    </div>
+
+    <div id="notifications" style="position: fixed; z-index: 3000; right: 2vw; top: 2vw;"></div>
+
+    <script src="/src/appmanager.js"></script>
+    <script src="/src/color.js"></script>
+    <script src="/src/loader.js"></script>
+    <script src="/src/alarms.js"></script>
+    <script src="/src/theme.js"></script>
+    <script src="/src/notification.js"></script>
+    <script src="/src/sleep.js"></script>
+    <script src="/src/weather.js"></script>
+    <script src="/src/timedate.js"></script>
+    <script src="/src/ambienteq.js"></script>
+    <script src="/src/scroll.js"></script>
+</body>
+</html>

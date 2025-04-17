@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <title>app</title>
+    <style id="dynamic-theme">
+        :root {
+            --text-color: white;
+            --surface-bg: #555;
+            --elevated-bg: #777;
+            --bg: #333;
+            --on-surface: #bbb;
+            --on-elevated: #aaa;
+        }
+    </style>
+    <style>
+        @font-face {
+            src: url("/fonts/google.ttf");
+            font-family: "Google Sans";
+        }
+
+        @font-face {
+            src: url("/fonts/mlp.ttf");
+            font-family: "MLPFindYourSparkle";
+        }
+
+        * {
+            color: var(--text-color);
+            font-family: "Google Sans", sans-serif;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        body {
+            font-size: 2.4vw;
+        }
+
+        input::placeholder {
+            color: var(--text-color);
+            opacity: .5;
+        }
+
+        select {
+            background: transparent;
+            border: none;
+            font-size: inherit;
+            width: max-content;
+            outline: none;
+            -webkit-appearance: media-slider;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body style="background-color: var(--bg);">
+    <div id="alarms" style="border-top: 1px solid var(--on-elevated); border-left: 1px solid var(--on-elevated); border-right: 1px solid var(--on-elevated);"></div>
+
+    <script src="/apps/alarms.js"></script>
+    <script src="/src/apptheme.js"></script>
+</body>
+</html>
